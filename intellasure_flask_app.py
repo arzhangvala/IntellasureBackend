@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-
 from dotenv import load_dotenv, dotenv_values
 import psycopg2
 import os
@@ -14,7 +13,6 @@ DB_HOST = os.getenv("DB_HOST")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_USER = os.getenv("DB_USER")
 
-#class User(db.model)
 user_hashmap = {
         "userid":[],
         "first_name":[],
@@ -24,6 +22,8 @@ user_hashmap = {
         "priviledges": [],
         "company": []
     }
+
+#Function to open database connection to postgresSQL instance
 def open_db():
     conn = psycopg2.connect(
         database = DB_NAME,
@@ -32,16 +32,17 @@ def open_db():
         host=DB_HOST
     )
     return conn
-
+def close_db(conn):
+    conn.close()
 conn = open_db()
 cursor = conn.cursor()
-class User():
 
+#User class for the User Table
+class User():
+    #This function load the global user_hashmap dictionary for caching of user data
     def populate_user_hashmap(self):
         user_hashmap["userid"]
-
         cursor = conn.cursor()
-
         select_statement = "SELECT * FROM users"
         cursor.execute(select_statement)
         users = cursor.fetchall()
@@ -50,13 +51,14 @@ class User():
             user_hashmap["userid"].append(user[0])
             user_hashmap["first_name"].append(user[1])
             user_hashmap["last_name"].append(user[2])
-            user_hashmap["email"].append(user[3])
+            user_hashmap["name"].append(user[3])
+            user_hashmap["email"].append(user[4])
             user_hashmap["priviledges"].append(user[5])
             user_hashmap["company"].append(user[6])
 
-def close_db(conn):
-    conn.close()
+#Defining Flask app instance will run globablly
 app = Flask(__name__)
+#This is simply a check to see if connection is made to api on first possible endpoint
 @app.route('/', methods=['GET'])
 def check():
 
@@ -81,7 +83,19 @@ def update_user(user_id):
             data_to_insert = (data["user_id"],data["first_name"], data["last_name"], data["name"], data["email"], data["priviledges"], data["company"])
             cursor.execute(insert_query, data_to_insert)
             conn.commit()
-            User.populate_user_hashmap()
+
+            #caching values into user_hashmap with the new user for faster lookups and to avoid reading from db
+            user_hashmap["user_id"].append( data["user_id"])
+            user_hashmap["first_name"].append(data["first_name"])
+            user_hashmap["last_name"].append(data["last_name"])
+            user_hashmap["name"].append(data["name"])
+            user_hashmap["email"].append(data["email"])
+            user_hashmap["priviledges"].append( data["priviledges"])
+            user_hashmap["company"].append(data["company"])
+
+
+
+
             return jsonify({
                 "Content-Type": "application/json",
                 "status": "Success",
@@ -138,18 +152,9 @@ def update_user(user_id):
             }
             return jsonify(temp_response)
 
-
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
     User = User()
     User.populate_user_hashmap()
-    print(user_hashmap)
+
     app.debug = True
     app.run()
