@@ -10,6 +10,7 @@ WORKDIR /IntellasureBackend
 ADD . /IntellasureBackend/
 
 # Install any needed packages specified in requirements.txt
+RUN pip freeze > requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 5000
