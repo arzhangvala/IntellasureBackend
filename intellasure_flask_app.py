@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv, dotenv_values
+from flask_cors import CORS  # Import CORS
 import psycopg2
 import os
 #Init app
@@ -58,6 +59,8 @@ class User():
 
 #Defining Flask app instance will run globablly
 app = Flask(__name__)
+CORS(app)
+
 #This is simply a check to see if connection is made to api on first possible endpoint
 @app.route('/', methods=['GET'])
 def check():
