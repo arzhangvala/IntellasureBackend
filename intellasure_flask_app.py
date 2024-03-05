@@ -113,7 +113,7 @@ def update_user(user_id):
                     "company": data["company"],
                     "user_id": data["user_id"]
                 }
-            })
+            }), 201
 
         else:
             temp_response = {
